@@ -46,7 +46,7 @@ with tab2:
     st.subheader("Generate and Take a Quiz")
     c1, c2 = st.columns(2)
     with c1:
-        topic = st.text_input("Topic (optional):", 
+        topic = st.text_input("Topic (optional):",
                               placeholder="e.g., TLS, firewalls, IDS, VPN")
     with c2:
         n = st.slider("Number of questions", 3, 10, 5)
@@ -64,28 +64,53 @@ with tab2:
             st.markdown(f"**Topic:** {quiz['topic'].title()}  | **Total Questions:** {len(quiz['items'])}")
             st.divider()
 
-            answers = []
-            for i, item in enumerate(quiz["items"], start=1):
-                st.markdown(f"**Q{i}.** {item['q']}")
-                if item["type"] == "tf":
-                    answers.append(st.selectbox(f"Answer {i}", [True, False], key=f"tf_{i}"))
-                elif item["type"] == "mcq":
-                    answers.append(st.radio(f"Select option {i}", item["options"], key=f"mcq_{i}"))
-                else:
-                    answers.append(st.text_area(f"Your response {i}", key=f"open_{i}", height=80))
+        answers = []
+        all_answered = True
+
+        for i, item in enumerate(quiz["items"], start=1):
+            st.markdown(f"**Q{i}.** {item['q']}")
+
+            if item["type"] == "tf":
+                # radio with NO default (index=None) → user must choose
+                resp = st.radio(
+                    f"Answer {i}",
+                    options=[True, False],
+                    key=f"tf_{i}",
+                    index=None
+                )
+
+            elif item["type"] == "mcq":
+                # radio with NO default (index=None)
+                resp = st.radio(
+                    f"Select option {i}",
+                    options=item["options"],
+                    key=f"mcq_{i}",
+                    index=None
+                )
+
+            else:  # open-ended
+                text = st.text_area(f"Your response {i}", key=f"open_{i}", height=80)
+                resp = text.strip() if text.strip() else None
+
+            if resp is None:
+                all_answered = False
+            answers.append(resp)
+            st.divider()
+
+        # Disable Grade until every question has a response
+        if st.button("✅ Grade Quiz", disabled=not all_answered):
+            with st.spinner("Evaluating your responses..."):
+                result = grade_quiz(quiz["items"], answers)
+            st.success(f"**Your Score:** {result['score']} / {result['total']}")
+            for d in result["details"]:
+                icon = "✅" if d["correct"] else "❌"
+                st.markdown(f"{icon} **Question:** {d['question']}")
+                st.write(f"- **Your Answer:** {d['your_answer']}")
+                st.write(f"- **Expected:** {d['expected']}")
+                st.write(f"- **Reasoning:** {d['rationale']}")
+                if d.get("sources"):
+                    st.caption("Sources: " + ", ".join(d["sources"]))
                 st.divider()
 
-            if st.button("✅ Grade Quiz"):
-                with st.spinner("Evaluating your responses..."):
-                    result = grade_quiz(quiz["items"], answers)
-                st.success(f"**Your Score:** {result['score']} / {result['total']}")
-
-                for d in result["details"]:
-                    icon = "✅" if d["correct"] else "❌"
-                    st.markdown(f"{icon} **Question:** {d['question']}")
-                    st.write(f"- **Your Answer:** {d['your_answer']}")
-                    st.write(f"- **Expected:** {d['expected']}")
-                    st.write(f"- **Reasoning:** {d['rationale']}")
-                    if d.get("sources"):
-                        st.caption("Sources: " + ", ".join(d["sources"]))
-                    st.divider()
+        if not all_answered:
+            st.info("Please answer all questions before grading.")
