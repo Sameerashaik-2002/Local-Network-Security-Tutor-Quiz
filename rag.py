@@ -13,8 +13,7 @@ import chromadb
 from chromadb.config import Settings
 import numpy as np
 
-# from models import embed_texts, cosine_sim
-from embeddings import embed_texts, cosine_sim
+from models import embed_texts, cosine_sim
 
 ROOT = os.path.dirname(__file__)
 DB_DIR = os.path.join(ROOT, "data", "vectordb")
@@ -235,7 +234,6 @@ def generate_quiz(topic: str = "", n: int = 5) -> Dict[str, Any]:
                 items.append({"type":"tf","q": s,"answer": True,"sources":[source]})
                 continue
             options = _distinct_opts(correct, pool)
-            
             if correct not in options:
                 options[0] = correct
                 random.shuffle(options)
@@ -284,7 +282,7 @@ def grade_quiz(items: List[Dict[str, Any]], responses: List[Any]) -> Dict[str, A
                 sim = 0.0
             else:
                 sim = float(cosine_sim(embed_texts([ref]), embed_texts([str(resp)])).ravel()[0])
-            correct = sim >= 0.45
+            correct = sim >= 0.58
             rationale = f"Semantic similarity {sim:.2f} (threshold 0.58)"
         score += 1 if correct else 0
         details.append({
