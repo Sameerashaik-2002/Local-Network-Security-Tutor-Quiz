@@ -4,3 +4,6 @@ chromadb
 pypdf
 numpy
 scikit-learn
+fastapi
+uvicorn
+requests
