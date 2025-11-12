@@ -41,22 +41,30 @@ def make_answer(query: str, k: int = 4) -> Tuple[str, List[Dict[str, str]]]:
     hits = retrieve(query, k=max(k, 8))
     if not hits:
         return ("I don't have any indexed materials yet. Add notes in data/ and run ingest.", [])
-    ctx = " ".join([d for d,_ in hits[:k]])
+    
+    ctx = " ".join([d for d, _ in hits[:k]])
     sentences = [s.strip() for s in re.split(r'(?<=[.!?])\s+', ctx) if s.strip()]
+    
     if not sentences:
         return ("I found related material but could not extract a concise answer.", [])
+    
     svecs = embed_texts(sentences)
     qvec = embed_texts([query])
     sims = cosine_sim(svecs, qvec).ravel()
     top_idx = np.argsort(-sims)[:5]
+    
     chosen = [sentences[i] for i in top_idx if 0 <= i < len(sentences)]
+    
     sources = []
     for _, m in hits[:k]:
-        src = m.get("source","local")
+        src = m.get("source", "local")
         if src not in sources:
             sources.append(src)
-    cite_str = " ".join(f"[{i+1}: {s}]" for i, s in enumerate(sources, start=1))
-    answer = (" ".join(chosen) or "I found related material but could not extract a concise answer.") + f"\n\nSources: {cite_str}"
+            
+    # MODIFICATION: The two lines that created and appended the source string are removed.
+    # The answer is now just the joined sentences.
+    answer = " ".join(chosen) or "I found related material but could not extract a concise answer."
+    
     return answer, [{"source": s} for s in sources]
 
 # =========================
