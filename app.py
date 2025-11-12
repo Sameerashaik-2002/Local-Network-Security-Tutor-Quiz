@@ -60,10 +60,10 @@ with tab1:
             st.markdown("### 🧠 Answer")
             st.write(answer)
             log_event("tutor_query", query)
-            if sources:
-                with st.expander("📎 Sources used"):
-                    for i, s in enumerate(sources, start=1):
-                        st.write(f"[{i}] {s['source']}")
+            # if sources:
+            #     with st.expander("📎 Sources used"):
+            #         for i, s in enumerate(sources, start=1):
+            #             st.write(f"[{i}] {s['source']}")
 
 
 # ================= QUIZ AGENT =================
